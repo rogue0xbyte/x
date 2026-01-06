@@ -23,9 +23,6 @@
 
     <nav>
         <h3>x.aadi.zip · admin</h3>
-        <ul>
-            <li><a href="{{ url_for('index') }}">home</a></li>
-        </ul>
     </nav>
 
     <section class="active" style="max-width: 500px; margin: 5rem auto;">
@@ -53,13 +50,9 @@
 
             <button type="submit" 
                     style="padding: .75rem 1.5rem; border: var(--border); background: var(--fg); color: var(--bg); cursor: pointer; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: .9rem; text-transform: lowercase; transition: .3s;">
-                send otp
+                login
             </button>
         </form>
-
-        <div style="margin-top: 2rem; text-align: center;">
-            <a href="{{ url_for('index') }}" style="font-size: .85rem; font-family: 'IBM Plex Mono', monospace;">← back</a>
-        </div>
     </section>
 </body>
 </html>

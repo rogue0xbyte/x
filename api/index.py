@@ -52,7 +52,7 @@ def send_otp_email(otp):
         server.quit()
         return True
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error sending OTP: {e}")
         return False
 
 def login_required(f):
@@ -108,10 +108,10 @@ def admin_login():
             # Send OTP
             if send_otp_email(otp):
                 session['otp_verified'] = False
-                flash('OTP sent to your email!', 'success')
+                flash('OTP sent to your device!', 'success')
                 return redirect(url_for('verify_otp'))
             else:
-                flash('Error sending OTP. Check email configuration.', 'error')
+                flash('Error sending OTP. Check device configuration.', 'error')
         else:
             flash('Invalid password', 'error')
     

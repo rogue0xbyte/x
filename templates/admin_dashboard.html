@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin Dashboard · x.aadi.zip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: .85rem;
+        }
+        
+        table th,
+        table td {
+            padding: .75rem;
+            border: var(--border);
+            text-align: left;
+        }
+        
+        table th {
+            background: rgba(0, 0, 0, 0.05);
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: lowercase;
+            font-size: .8rem;
+        }
+        
+        body.dark table th {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        table td {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .url-link {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .8rem;
+            word-break: break-all;
+        }
+        
+        .btn {
+            padding: .4rem .8rem;
+            border: var(--border);
+            background: var(--bg);
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: .75rem;
+            text-transform: lowercase;
+            transition: .2s;
+        }
+        
+        .btn:hover {
+            background: var(--fg);
+            color: var(--bg);
+        }
+        
+        .btn-delete {
+            background: #ffebee;
+        }
+        
+        .btn-delete:hover {
+            background: #f44336;
+            color: white;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            border: var(--border);
+            border-radius: 8px;
+            min-width: 200px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-label {
+            font-size: .85rem;
+            text-transform: lowercase;
+            color: #666;
+            margin-top: .5rem;
+        }
+        
+        .edit-row {
+            display: none;
+        }
+        
+        .edit-row td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        body.dark .edit-row td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+<body class="modern">
+    <svg class="mesh" viewBox="0 0 1584 396" preserveAspectRatio="none">
+        <g>
+            <line x1="400" y1="60" x2="520" y2="150"/>
+            <line x1="520" y1="150" x2="680" y2="80"/>
+            <line x1="400" y1="60" x2="680" y2="80"/>
+            <circle cx="400" cy="60" r="6"/>
+            <circle cx="520" cy="150" r="6"/>
+            <circle cx="680" cy="80" r="6"/>
+        </g>
+    </svg>
+
+    <nav>
+        <h3>x.aadi.zip · admin</h3>
+        <ul>
+            <li><a href="{{ url_for('index') }}">home</a></li>
+            <li><a href="{{ url_for('admin_logout') }}">logout</a></li>
+        </ul>
+    </nav>
+
+    <section class="active">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1rem; border: var(--border); background: {% if category == 'error' %}#ffebee{% else %}#e8f5e9{% endif %}; border-radius: 4px; animation: slideIn 0.3s ease-out;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h2>url shortener dashboard</h2>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ urls|length }}</div>
+                <div class="stat-label">total urls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ urls|sum(attribute='clicks') }}</div>
+                <div class="stat-label">total clicks</div>
+            </div>
+        </div>
+
+        <!-- Create New URL Form -->
+        <details style="max-width: 100%; margin-bottom: 2rem;">
+            <summary style="font-size: 1rem;">+ create new short url</summary>
+            <form method="POST" action="{{ url_for('create_url') }}" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: .5rem; font-family: 'IBM Plex Mono', monospace; font-size: .85rem;">
+                            short url
+                            <span style="font-size: .75rem; opacity: .7;">(leave blank to auto-generate)</span>
+                        </label>
+                        <div style="display: flex; gap: .5rem;">
+                            <input type="text" 
+                                   id="shortUrlInput"
+                                   name="short_url" 
+                                   placeholder="e.g., abc123"
+                                   style="flex: 1; padding: .75rem; border: var(--border); border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: .9rem; background: var(--bg); color: var(--fg);">
+                            <button type="button" 
+                                    onclick="generateShortUrl()"
+                                    class="btn"
+                                    style="white-space: nowrap;">
+                                🎲 generate
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: .5rem; font-family: 'IBM Plex Mono', monospace; font-size: .85rem;">destination url *</label>
+                        <input type="url" 
+                               name="destination_url" 
+                               required
+                               placeholder="https://example.com"
+                               style="width: 100%; padding: .75rem; border: var(--border); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: .9rem; background: var(--bg); color: var(--fg);">
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        style="padding: .75rem 1.5rem; border: var(--border); background: var(--fg); color: var(--bg); cursor: pointer; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: .9rem; text-transform: lowercase; width: fit-content;">
+                    create short url
+                </button>
+            </form>
+        </details>
+
+        <!-- URLs Table -->
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">short url</th>
+                        <th style="width: 35%;">destination</th>
+                        <th style="width: 10%;">clicks</th>
+                        <th style="width: 15%;">created</th>
+                        <th style="width: 15%;">last accessed</th>
+                        <th style="width: 10%;">actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for url in urls %}
+                    <tr>
+                        <td>
+                            <a href="/{{ url.short_url }}" target="_blank" class="url-link" style="color: var(--accent);">
+                                /{{ url.short_url }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url.destination_url }}" target="_blank" class="url-link" style="word-break: break-all; font-size: .75rem;">
+                                {{ url.destination_url }}
+                            </a>
+                        </td>
+                        <td>{{ url.clicks }}</td>
+                        <td style="font-size: .75rem;">{{ url.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td style="font-size: .75rem;">
+                            {% if url.last_accessed %}
+                            {{ url.last_accessed.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                            never
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button onclick="toggleEdit('edit-{{ url._id }}')" class="btn">edit</button>
+                            <form method="POST" action="{{ url_for('delete_url', url_id=url._id) }}" style="display: inline;" onsubmit="return confirm('Delete this URL?');">
+                                <button type="submit" class="btn btn-delete">delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr id="edit-{{ url._id }}" class="edit-row">
+                        <td colspan="6" style="padding: 1.5rem;">
+                            <form method="POST" action="{{ url_for('edit_url', url_id=url._id) }}" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: .5rem; font-family: 'IBM Plex Mono', monospace; font-size: .85rem;">short url *</label>
+                                        <input type="text" 
+                                               name="short_url" 
+                                               value="{{ url.short_url }}"
+                                               required
+                                               style="width: 100%; padding: .75rem; border: var(--border); border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: .9rem; background: var(--bg); color: var(--fg);">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; margin-bottom: .5rem; font-family: 'IBM Plex Mono', monospace; font-size: .85rem;">destination url *</label>
+                                        <input type="url" 
+                                               name="destination_url" 
+                                               value="{{ url.destination_url }}"
+                                               required
+                                               style="width: 100%; padding: .75rem; border: var(--border); border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: .9rem; background: var(--bg); color: var(--fg);">
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; gap: .5rem;">
+                                    <button type="submit" class="btn" style="background: var(--fg); color: var(--bg);">save changes</button>
+                                    <button type="button" onclick="toggleEdit('edit-{{ url._id }}')" class="btn">cancel</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if not urls %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #666;">
+                            no short urls yet. create one above to get started!
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <div style="font-size: 0.8rem; color: gray;">
+            © 2025 aaditya rengarajan · x.aadi.zip
+        </div>
+    </footer>
+
+    <script>
+        function toggleEdit(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'none' || el.style.display === '' ? 'table-row' : 'none';
+        }
+        
+        async function generateShortUrl() {
+            try {
+                const response = await fetch('/api/generate-short-url');
+                const data = await response.json();
+                document.getElementById('shortUrlInput').value = data.short_url;
+            } catch (error) {
+                console.error('Error generating short URL:', error);
+            }
+        }
+    </script>
+</body>
+</html>
